@@ -1,4 +1,5 @@
-// form.js
+import { initScale, resetScale } from './scale.js';
+import { initEffects, resetEffects } from './effects.js';
 
 const uploadForm = document.querySelector('.img-upload__form');
 const uploadInput = uploadForm.querySelector('.img-upload__input');
@@ -115,15 +116,23 @@ const initPristine = () => {
   );
 };
 
+const resetForm = () => {
+  uploadForm.reset();
+  resetScale();
+  resetEffects();
+};
+
 const openForm = () => {
   uploadOverlay.classList.remove('hidden');
   document.body.classList.add('modal-open');
+  resetScale();
+  resetEffects();
 };
 
 const closeForm = () => {
   uploadOverlay.classList.add('hidden');
   document.body.classList.remove('modal-open');
-  uploadForm.reset();
+  resetForm();
 };
 
 const onUploadInputChange = () => {
@@ -154,6 +163,8 @@ const onFormSubmit = (evt) => {
 
 const initForm = () => {
   initPristine();
+  initScale();
+  initEffects();
 
   uploadInput.addEventListener('change', onUploadInputChange);
   closeButton.addEventListener('click', onCloseButtonClick);
