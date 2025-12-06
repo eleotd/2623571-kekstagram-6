@@ -15,7 +15,9 @@ const createPictureElement = (photoData) => {
   pictureImg.alt = photoData.description;
   pictureLikes.textContent = photoData.likes;
 
-  const commentsCount = photoData.comments ? photoData.comments.length : 0;
+  const commentsCount = photoData.comments && photoData.comments.comments
+    ? photoData.comments.comments.length
+    : 0;
   pictureComments.textContent = commentsCount;
 
   return { element: pictureElement, link: pictureLink };
