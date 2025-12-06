@@ -1,4 +1,5 @@
 import { getSimilarPhotoDescriptions } from './data.js';
+import { initFullPictureView } from './full-picture.js';
 
 const pictureTemplate = document.querySelector('#picture').content;
 const picturesContainer = document.querySelector('.pictures');
@@ -8,6 +9,7 @@ const createPictureElement = (photoData) => {
   const pictureImg = pictureElement.querySelector('.picture__img');
   const pictureComments = pictureElement.querySelector('.picture__comments');
   const pictureLikes = pictureElement.querySelector('.picture__likes');
+  const pictureLink = pictureElement.querySelector('.picture');
 
   pictureImg.src = photoData.url;
   pictureImg.alt = photoData.description;
@@ -16,16 +18,21 @@ const createPictureElement = (photoData) => {
   const commentsCount = photoData.comments ? photoData.comments.length : 0;
   pictureComments.textContent = commentsCount;
 
-  return pictureElement;
+  return { element: pictureElement, link: pictureLink };
 };
 
 const renderPictures = () => {
   const photos = getSimilarPhotoDescriptions();
   const fragment = document.createDocumentFragment();
+  const pictureElements = [];
 
   photos.forEach((photo) => {
-    const pictureElement = createPictureElement(photo);
-    fragment.appendChild(pictureElement);
+    const { element, link } = createPictureElement(photo);
+
+    link.dataset.photoId = photo.id;
+
+    fragment.appendChild(element);
+    pictureElements.push(link);
   });
 
   const uploadForm = picturesContainer.querySelector('.img-upload');
@@ -34,6 +41,8 @@ const renderPictures = () => {
   } else {
     picturesContainer.appendChild(fragment);
   }
+
+  initFullPictureView(photos);
 };
 
 export { renderPictures };
