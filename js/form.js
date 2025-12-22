@@ -1,3 +1,5 @@
+import { sendData } from './api.js';
+import { showSuccessMessage, showErrorMessage } from './messages.js';
 import { initScale, resetScale } from './scale.js';
 import { initEffects, resetEffects } from './effects.js';
 
@@ -7,6 +9,7 @@ const uploadOverlay = uploadForm.querySelector('.img-upload__overlay');
 const closeButton = uploadForm.querySelector('.img-upload__cancel');
 const hashtagsInput = uploadForm.querySelector('.text__hashtags');
 const commentInput = uploadForm.querySelector('.text__description');
+const submitButton = uploadForm.querySelector('.img-upload__submit');
 
 let pristine;
 
@@ -122,6 +125,41 @@ const resetForm = () => {
   resetEffects();
 };
 
+const blockSubmitButton = () => {
+  submitButton.disabled = true;
+  submitButton.textContent = 'Отправляю...';
+};
+
+const unblockSubmitButton = () => {
+  submitButton.disabled = false;
+  submitButton.textContent = 'Опубликовать';
+};
+
+const onFormSubmit = async (evt) => {
+  evt.preventDefault();
+
+  const isValid = pristine.validate();
+  if (!isValid) {
+    return;
+  }
+
+  blockSubmitButton();
+
+  try {
+    const formData = new FormData(evt.target);
+    await sendData(formData);
+
+    // eslint-disable-next-line no-use-before-define
+    closeForm();
+    showSuccessMessage();
+    resetForm();
+  } catch (err) {
+    showErrorMessage();
+  } finally {
+    unblockSubmitButton();
+  }
+};
+
 const openForm = () => {
   uploadOverlay.classList.remove('hidden');
   document.body.classList.add('modal-open');
@@ -132,7 +170,6 @@ const openForm = () => {
 const closeForm = () => {
   uploadOverlay.classList.add('hidden');
   document.body.classList.remove('modal-open');
-  resetForm();
 };
 
 const onUploadInputChange = () => {
@@ -141,6 +178,7 @@ const onUploadInputChange = () => {
 
 const onCloseButtonClick = () => {
   closeForm();
+  resetForm();
 };
 
 const onDocumentKeydown = (evt) => {
@@ -151,13 +189,8 @@ const onDocumentKeydown = (evt) => {
     if (!isHashtagsFocused && !isCommentFocused) {
       evt.preventDefault();
       closeForm();
+      resetForm();
     }
-  }
-};
-
-const onFormSubmit = (evt) => {
-  if (!pristine.validate()) {
-    evt.preventDefault();
   }
 };
 

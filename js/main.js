@@ -1,13 +1,16 @@
-import './data.js';
-import {getSimilarPhotoDescriptions} from './data.js';
-import { renderPictures } from './pictures.js';
+import { getData } from './api.js';
+import { renderPhotos, showLoadingError } from './pictures.js';
 import { initForm } from './form.js';
 
-// eslint-disable-next-line no-console
-console.log(
-  getSimilarPhotoDescriptions()
-);
+const initApp = async () => {
+  try {
+    const photos = await getData();
+    renderPhotos(photos);
+  } catch (error) {
+    showLoadingError(error.message);
+  }
 
-renderPictures();
+  initForm();
+};
 
-initForm();
+initApp();
