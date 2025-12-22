@@ -2,6 +2,7 @@ import { sendData } from './api.js';
 import { showSuccessMessage, showErrorMessage } from './messages.js';
 import { initScale, resetScale } from './scale.js';
 import { initEffects, resetEffects } from './effects.js';
+import { initUploadPreview } from './upload-preview.js';
 
 const uploadForm = document.querySelector('.img-upload__form');
 const uploadInput = uploadForm.querySelector('.img-upload__input');
@@ -10,6 +11,7 @@ const closeButton = uploadForm.querySelector('.img-upload__cancel');
 const hashtagsInput = uploadForm.querySelector('.text__hashtags');
 const commentInput = uploadForm.querySelector('.text__description');
 const submitButton = uploadForm.querySelector('.img-upload__submit');
+const uploadPreview = document.querySelector('.img-upload__preview img');
 
 let pristine;
 
@@ -123,6 +125,12 @@ const resetForm = () => {
   uploadForm.reset();
   resetScale();
   resetEffects();
+  uploadPreview.src = 'img/upload-default-image.jpg';
+
+  const effectsPreviews = document.querySelectorAll('.effects__preview');
+  effectsPreviews.forEach((preview) => {
+    preview.style.backgroundImage = 'url("img/upload-default-image.jpg")';
+  });
 };
 
 const blockSubmitButton = () => {
@@ -173,7 +181,10 @@ const closeForm = () => {
 };
 
 const onUploadInputChange = () => {
-  openForm();
+  const file = uploadInput.files[0];
+  if (file) {
+    openForm();
+  }
 };
 
 const onCloseButtonClick = () => {
@@ -198,6 +209,7 @@ const initForm = () => {
   initPristine();
   initScale();
   initEffects();
+  initUploadPreview();
 
   uploadInput.addEventListener('change', onUploadInputChange);
   closeButton.addEventListener('click', onCloseButtonClick);

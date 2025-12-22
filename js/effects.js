@@ -102,6 +102,8 @@ const updateEffect = () => {
 const onEffectsChange = (evt) => {
   if (evt.target.type === 'radio') {
     currentEffect = evt.target.value;
+    previewImage.className = '';
+    previewImage.classList.add(`effects__preview--${currentEffect}`);
 
     if (currentEffect === 'none') {
       effectLevelContainer.classList.add('hidden');
@@ -117,6 +119,7 @@ const onEffectsChange = (evt) => {
 
 const resetEffects = () => {
   currentEffect = 'none';
+  previewImage.className = '';
   previewImage.style.filter = 'none';
   effectLevelContainer.classList.add('hidden');
   const noneEffect = effectsContainer.querySelector('#effect-none');
