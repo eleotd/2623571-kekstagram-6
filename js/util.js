@@ -5,28 +5,43 @@ function restoreFormDefaults() {
   const descriptionField = form.querySelector('.text__description');
   const modal = document.querySelector('.img-upload__overlay');
   const preview = modal.querySelector('.img-upload__preview img');
-  const slider = document.querySelector('.effect-level__slider');
+  const sliderContainer = document.querySelector('.img-upload__effect-level');
   const scaleField = document.querySelector('.scale__control--value');
   const submitButton = form.querySelector('.img-upload__submit');
+  const effectsPreviews = document.querySelectorAll('.effects__preview');
 
   form.reset();
-  preview.src = '';
+
+  preview.src = 'img/upload-default-image.jpg';
+  // eslint-disable-next-line no-shadow
+  effectsPreviews.forEach((preview) => {
+    preview.style.backgroundImage = 'url("img/upload-default-image.jpg")';
+  });
+
   hashtagsField.value = '';
   descriptionField.value = '';
   fileField.value = '';
+
   submitButton.disabled = false;
+  submitButton.textContent = 'Опубликовать';
 
   scaleField.value = '100%';
   preview.style.transform = 'scale(1)';
 
-  slider.noUiSlider.set(100);
-  slider.classList.add('hidden');
-  document.querySelector('input[name="effect"][value="none"]').checked = true;
+  sliderContainer.classList.add('hidden');
+  const noneEffectRadio = document.querySelector('input[name="effect"][value="none"]');
+  if (noneEffectRadio) {
+    noneEffectRadio.checked = true;
+  }
+
   preview.className = '';
   preview.style.filter = '';
 
   modal.classList.add('hidden');
   document.body.classList.remove('modal-open');
+
+  hashtagsField.disabled = false;
+  descriptionField.disabled = false;
 }
 
 function displaySystemMessage(messageType) {

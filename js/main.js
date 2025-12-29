@@ -28,22 +28,19 @@ function getMostCommentedPhotos(photos) {
 
 function clearPhotoGrid() {
   const container = document.querySelector('.pictures');
-  container.querySelectorAll('.picture').forEach((photo) => photo.remove());
+  const pictures = container.querySelectorAll('.picture');
+  pictures.forEach((photo) => photo.remove());
 }
 
 function applyPhotoFilter(filterId) {
   clearPhotoGrid();
 
-  switch(filterId) {
-    case 'filter-default':
-      filteredPhotos = allServerPhotos;
-      break;
-    case 'filter-random':
-      filteredPhotos = getRandomPhotos(allServerPhotos);
-      break;
-    case 'filter-discussed':
-      filteredPhotos = getMostCommentedPhotos(allServerPhotos);
-      break;
+  if (filterId === 'filter-default') {
+    filteredPhotos = allServerPhotos;
+  } else if (filterId === 'filter-random') {
+    filteredPhotos = getRandomPhotos(allServerPhotos);
+  } else if (filterId === 'filter-discussed') {
+    filteredPhotos = getMostCommentedPhotos(allServerPhotos);
   }
 
   renderThumbnails(filteredPhotos);
@@ -54,10 +51,17 @@ const debouncedFilter = createDebouncedFunction(applyPhotoFilter, FILTER_TIMEOUT
 function setupFilterButtons() {
   filtersSection.classList.remove('img-filters--inactive');
 
+  const defaultButton = document.querySelector('#filter-default');
+  if (defaultButton) {
+    defaultButton.classList.add('img-filters__button--active');
+  }
+
   filtersSection.addEventListener('click', (event) => {
     if (event.target.classList.contains('img-filters__button')) {
-      filtersSection.querySelector('.img-filters__button--active')
-        .classList.remove('img-filters__button--active');
+      const activeButton = filtersSection.querySelector('.img-filters__button--active');
+      if (activeButton) {
+        activeButton.classList.remove('img-filters__button--active');
+      }
 
       event.target.classList.add('img-filters__button--active');
       debouncedFilter(event.target.id);
@@ -70,11 +74,14 @@ async function loadServerPhotos() {
     allServerPhotos = await fetchImagesFromServer();
     filteredPhotos = allServerPhotos;
 
+    renderThumbnails(filteredPhotos);
+
     filtersSection.classList.remove('img-filters--inactive');
     setupFilterButtons();
-    renderThumbnails(filteredPhotos);
+
   } catch (error) {
     const errorMessage = document.createElement('div');
+    errorMessage.className = 'data-error';
     errorMessage.textContent = 'Не удалось загрузить фотографии. Попробуйте перезагрузить страницу.';
     errorMessage.style.cssText = `
       color: white;
@@ -85,15 +92,17 @@ async function loadServerPhotos() {
       margin: 20px auto;
       border-radius: 5px;
       max-width: 600px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     `;
     document.body.appendChild(errorMessage);
   }
 }
 
 function startApplication() {
-  loadServerPhotos();
   initializeForm(userPhotos, renderThumbnails);
+
+  setTimeout(() => {
+    loadServerPhotos();
+  }, 100);
 }
 
 document.addEventListener('DOMContentLoaded', startApplication);
