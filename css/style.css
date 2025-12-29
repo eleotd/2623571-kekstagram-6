@@ -1395,3 +1395,32 @@ main {
 .hidden {
   display: none;
 }
+
+.img-upload__field-wrapper--error input,
+.img-upload__field-wrapper--error textarea {
+  border-color: #ff4e4e;
+  background-color: rgba(255, 78, 78, 0.05);
+}
+
+.img-upload__field-wrapper--error .text__hashtags,
+.img-upload__field-wrapper--error .text__description {
+  border-color: #ff4e4e !important;
+  background-color: rgba(255, 78, 78, 0.05) !important;
+}
+
+.img-upload__error {
+  color: #ff4e4e !important;
+  font-size: 12px !important;
+  margin-top: 5px !important;
+  display: block !important;
+}
+
+.text__hashtags:disabled,
+.text__description:disabled {
+  opacity: 0.5;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.img-upload__effect-level.hidden {
+  display: none !important;
+}
