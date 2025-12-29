@@ -1,39 +1,30 @@
-const URL = 'https://29.javascript.htmlacademy.pro/kekstagram';
+const SERVER_URL = 'https://29.javascript.htmlacademy.pro/kekstagram';
 
-const Route = {
-  GET_DATA: '/data',
-  SEND_DATA: '/'
-};
-
-const Method = {
-  GET: 'GET',
-  POST: 'POST'
-};
-
-const ErrorText = {
-  GET_DATA: 'Не удалось загрузить данные. Попробуйте обновить страницу',
-  SEND_DATA: 'Не удалось отправить форму. Попробуйте ещё раз'
-};
-
-const load = async (route, errorText, method = Method.GET, body = null) => {
+async function fetchImagesFromServer() {
   try {
-    const response = await fetch(`${URL}${route}`, {
-      method,
-      body
-    });
-
+    const response = await fetch(`${SERVER_URL}/data`);
     if (!response.ok) {
-      throw new Error();
+      throw new Error(`Ошибка сервера: ${response.status}`);
     }
-
-    return response.json();
-  } catch (err) {
-    throw new Error(errorText);
+    return await response.json();
+  } catch (error) {
+    throw new Error('Не удалось загрузить изображения. Проверьте подключение к интернету.');
   }
-};
+}
 
-const getData = () => load(Route.GET_DATA, ErrorText.GET_DATA);
+async function uploadImageData(formData) {
+  try {
+    const response = await fetch(SERVER_URL, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!response.ok) {
+      throw new Error(`Ошибка отправки: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    throw new Error('Ошибка при отправке изображения на сервер.');
+  }
+}
 
-const sendData = (body) => load(Route.SEND_DATA, ErrorText.SEND_DATA, Method.POST, body);
-
-export { getData, sendData };
+export { fetchImagesFromServer, uploadImageData };

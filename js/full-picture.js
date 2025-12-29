@@ -1,131 +1,102 @@
-const bigPicture = document.querySelector('.big-picture');
-const bigPictureImg = bigPicture.querySelector('.big-picture__img img');
-const likesCount = bigPicture.querySelector('.likes-count');
-const commentsCount = bigPicture.querySelector('.comments-count');
-const socialComments = bigPicture.querySelector('.social__comments');
-const socialCaption = bigPicture.querySelector('.social__caption');
-const commentCountElement = bigPicture.querySelector('.social__comment-count');
-const commentsLoader = bigPicture.querySelector('.comments-loader');
-const closeButton = bigPicture.querySelector('.big-picture__cancel');
+const fullscreenModal = document.querySelector('.big-picture');
+const fullImage = fullscreenModal.querySelector('.big-picture__img img');
+const likesDisplay = fullscreenModal.querySelector('.likes-count');
+const commentsTotal = fullscreenModal.querySelector('.comments-count');
+const commentsContainer = fullscreenModal.querySelector('.social__comments');
+const imageDescription = fullscreenModal.querySelector('.social__caption');
+const commentsCounter = fullscreenModal.querySelector('.social__comment-count');
+const loadMoreButton = fullscreenModal.querySelector('.comments-loader');
+const closeButton = fullscreenModal.querySelector('.big-picture__cancel');
 
-const COMMENTS_PER_PAGE = 5;
-let currentComments = [];
-let shownCommentsCount = 0;
+const COMMENTS_BATCH_SIZE = 5;
+let commentsData = [];
+let visibleCommentsCount = 0;
 
-const createCommentElement = (comment) => {
+function generateCommentElement(commentInfo) {
   const commentElement = document.createElement('li');
   commentElement.classList.add('social__comment');
 
-  commentElement.innerHTML = `
-    <img
-      class="social__picture"
-      src="${comment.avatar}"
-      alt="${comment.name}"
-      width="35" height="35">
-    <p class="social__text">${comment.message}</p>
-  `;
+  const avatarElement = document.createElement('img');
+  avatarElement.className = 'social__picture';
+  avatarElement.src = commentInfo.avatar;
+  avatarElement.alt = commentInfo.name;
+  avatarElement.width = 35;
+  avatarElement.height = 35;
 
+  const textElement = document.createElement('p');
+  textElement.className = 'social__text';
+  textElement.textContent = commentInfo.message;
+
+  commentElement.append(avatarElement, textElement);
   return commentElement;
-};
+}
 
-const updateCommentsCounter = () => {
-  const totalComments = currentComments.length;
-  const shownText = `Показано ${shownCommentsCount} из ${totalComments} комментариев`;
-  commentCountElement.textContent = shownText;
-};
+function displayComments() {
+  const remainingComments = commentsData.slice(visibleCommentsCount, visibleCommentsCount + COMMENTS_BATCH_SIZE);
 
-const renderNextComments = () => {
-  const remainingComments = currentComments.length - shownCommentsCount;
-  const commentsToShow = Math.min(COMMENTS_PER_PAGE, remainingComments);
-
-  const fragment = document.createDocumentFragment();
-
-  for (let i = 0; i < commentsToShow; i++) {
-    const commentIndex = shownCommentsCount + i;
-    const comment = currentComments[commentIndex];
-    const commentElement = createCommentElement(comment);
-    fragment.appendChild(commentElement);
-  }
-
-  socialComments.appendChild(fragment);
-  shownCommentsCount += commentsToShow;
-
-  updateCommentsCounter();
-
-  if (shownCommentsCount >= currentComments.length) {
-    commentsLoader.classList.add('hidden');
-  }
-};
-
-const renderCommentsWithPagination = (comments) => {
-  currentComments = comments;
-  shownCommentsCount = 0;
-  socialComments.innerHTML = '';
-
-  commentCountElement.classList.remove('hidden');
-  commentsLoader.classList.remove('hidden');
-
-  const onLoadMoreClick = () => {
-    renderNextComments();
-  };
-
-  commentsLoader.removeEventListener('click', onLoadMoreClick);
-  commentsLoader.addEventListener('click', onLoadMoreClick);
-
-  renderNextComments();
-};
-
-const openBigPicture = (photoData) => {
-  bigPictureImg.src = photoData.url;
-  bigPictureImg.alt = photoData.description;
-  likesCount.textContent = photoData.likes;
-
-  const totalComments = photoData.comments ? photoData.comments.length : 0;
-  commentsCount.textContent = totalComments;
-
-  socialCaption.textContent = photoData.description;
-
-  if (photoData.comments && Array.isArray(photoData.comments)) {
-    renderCommentsWithPagination(photoData.comments);
-  } else {
-    socialComments.innerHTML = '';
-    commentCountElement.classList.add('hidden');
-    commentsLoader.classList.add('hidden');
-  }
-
-  bigPicture.classList.remove('hidden');
-  document.body.classList.add('modal-open');
-};
-
-const closeBigPicture = () => {
-  bigPicture.classList.add('hidden');
-  document.body.classList.remove('modal-open');
-  currentComments = [];
-  shownCommentsCount = 0;
-};
-
-closeButton.addEventListener('click', () => {
-  closeBigPicture();
-});
-
-document.addEventListener('keydown', (evt) => {
-  if (evt.key === 'Escape' && !bigPicture.classList.contains('hidden')) {
-    closeBigPicture();
-  }
-});
-
-const initFullPictureView = (photos) => {
-  const pictureElements = document.querySelectorAll('.picture');
-
-  pictureElements.forEach((pictureElement, index) => {
-    pictureElement.addEventListener('click', (evt) => {
-      evt.preventDefault();
-
-      if (photos[index]) {
-        openBigPicture(photos[index]);
-      }
-    });
+  remainingComments.forEach((comment) => {
+    commentsContainer.appendChild(generateCommentElement(comment));
   });
-};
 
-export { initFullPictureView, openBigPicture, closeBigPicture };
+  visibleCommentsCount += remainingComments.length;
+  commentsCounter.textContent = `${visibleCommentsCount} из ${commentsData.length} комментариев`;
+
+  if (visibleCommentsCount >= commentsData.length) {
+    loadMoreButton.classList.add('hidden');
+  }
+}
+
+function showImageFullscreen(imageInfo) {
+  fullImage.src = imageInfo.url;
+  fullImage.alt = imageInfo.description;
+  likesDisplay.textContent = imageInfo.likes.toString();
+  commentsTotal.textContent = imageInfo.comments.length.toString();
+  imageDescription.textContent = imageInfo.description;
+
+  commentsContainer.innerHTML = '';
+  fullImage.className = '';
+
+  if (imageInfo.effect && imageInfo.effect !== 'none') {
+    fullImage.classList.add(`effects__preview--${imageInfo.effect}`);
+  }
+
+  commentsData = imageInfo.comments;
+  visibleCommentsCount = 0;
+
+  displayComments();
+
+  if (commentsData.length > 0) {
+    commentsCounter.classList.remove('hidden');
+    if (commentsData.length > COMMENTS_BATCH_SIZE) {
+      loadMoreButton.classList.remove('hidden');
+    } else {
+      loadMoreButton.classList.add('hidden');
+    }
+  } else {
+    commentsCounter.classList.add('hidden');
+    loadMoreButton.classList.add('hidden');
+  }
+
+  fullscreenModal.classList.remove('hidden');
+  document.body.classList.add('modal-open');
+
+  closeButton.addEventListener('click', closeFullscreen);
+  document.addEventListener('keydown', handleEscapePress);
+}
+
+function closeFullscreen() {
+  fullscreenModal.classList.add('hidden');
+  document.body.classList.remove('modal-open');
+  closeButton.removeEventListener('click', closeFullscreen);
+  document.removeEventListener('keydown', handleEscapePress);
+}
+
+function handleEscapePress(event) {
+  if (event.key === 'Escape') {
+    closeFullscreen();
+  }
+}
+
+loadMoreButton.addEventListener('click', displayComments);
+
+export { showImageFullscreen };
