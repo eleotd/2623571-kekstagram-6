@@ -52,7 +52,7 @@ function showNotification(type) {
   }
 
   function escapeHandler(event) {
-    if (event.key === 'Escape' && notification) {
+    if (event.key === 'Escape') {
       event.stopPropagation();
       removeNotification();
     }
@@ -65,48 +65,48 @@ function showNotification(type) {
       removeNotification();
     }
   });
-
-  notification.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-      event.stopPropagation();
-    }
-  });
 }
 
 function resetFormState() {
   uploadForm.reset();
-  previewImage.src = '';
+
+  const errorElements = document.querySelectorAll('.img-upload__error, .pristine-error');
+  errorElements.forEach((el) => el.remove());
+
+  pristine.reset();
+
   hashtagsInput.value = '';
   descriptionInput.value = '';
-  fileInput.value = '';
+
   submitBtn.disabled = false;
   submitBtn.textContent = 'Опубликовать';
 
   previewImage.src = 'img/upload-default-image.jpg';
+  previewImage.className = '';
+  previewImage.style.filter = '';
+  previewImage.style.transform = 'scale(1)';
 
   effectsPreviews.forEach((preview) => {
     preview.style.backgroundImage = 'url("img/upload-default-image.jpg")';
   });
 
   scaleValue.value = '100%';
-  previewImage.style.transform = 'scale(1)';
 
-  effectSlider.noUiSlider.set(100);
+  if (effectSlider.noUiSlider) {
+    effectSlider.noUiSlider.set(100);
+  }
   effectSliderContainer.classList.add('hidden');
 
   const noneRadio = document.querySelector('input[name="effect"][value="none"]');
   if (noneRadio) {
     noneRadio.checked = true;
   }
-
-  previewImage.className = '';
-  previewImage.style.filter = '';
   currentEffect = 'none';
-
-  pristine.reset();
 
   overlay.classList.add('hidden');
   document.body.classList.remove('modal-open');
+
+  document.removeEventListener('keydown', handleEscapeKey);
 }
 
 function handleEscapeKey(event) {
@@ -141,23 +141,25 @@ function setupScaleControls() {
   const MIN_SCALE = 25;
   const MAX_SCALE = 100;
 
-  function updateScale(scale) {
-    const clampedScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
-    scaleValue.value = `${clampedScale}%`;
-    previewImage.style.transform = `scale(${clampedScale / 100})`;
-  }
+  let currentScale = 100;
+
+  const updateScale = (newScale) => {
+    currentScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
+    scaleValue.value = `${currentScale}%`;
+    previewImage.style.transform = `scale(${currentScale / 100})`;
+    return currentScale;
+  };
 
   scaleDown.addEventListener('click', () => {
-    const currentScale = parseInt(scaleValue.value, 10) - SCALE_STEP;
-    updateScale(currentScale);
+    updateScale(currentScale - SCALE_STEP);
   });
 
   scaleUp.addEventListener('click', () => {
-    const currentScale = parseInt(scaleValue.value, 10) + SCALE_STEP;
-    updateScale(currentScale);
+    updateScale(currentScale + SCALE_STEP);
   });
 
-  updateScale(100);
+  scaleValue.value = '100%';
+  previewImage.style.transform = 'scale(1)';
 }
 
 function applyEffectToImage(effect, value) {
@@ -268,16 +270,6 @@ function setupEffectSlider() {
   });
 }
 
-function getEffectSettings() {
-  const checkedRadio = Array.from(effectRadios).find((radio) => radio.checked);
-  const selectedEffect = checkedRadio ? checkedRadio.value : 'none';
-  const intensity = effectSlider.noUiSlider ? parseFloat(effectSlider.noUiSlider.get()) : 100;
-
-  return {
-    effect: selectedEffect,
-    intensity: selectedEffect === 'none' ? null : intensity
-  };
-}
 
 function setupFormValidation() {
   pristine.addValidator(
@@ -294,22 +286,14 @@ function setupFormValidation() {
       }
 
       const regex = /^#[A-Za-zА-Яа-яёЁ0-9]{1,19}$/;
-      const seen = new Set();
 
       for (const tag of hashtags) {
         if (tag === '#') {
           return false;
         }
-
         if (!regex.test(tag)) {
           return false;
         }
-
-        const lowerTag = tag.toLowerCase();
-        if (seen.has(lowerTag)) {
-          return false;
-        }
-        seen.add(lowerTag);
       }
 
       const lowerTags = hashtags.map((tag) => tag.toLowerCase());
@@ -337,6 +321,9 @@ function initializeForm() {
     if (selectedFile) {
       const imageUrl = URL.createObjectURL(selectedFile);
       previewImage.src = imageUrl;
+
+      scaleValue.value = '100%';
+      previewImage.style.transform = 'scale(1)';
 
       updateEffectsPreviews(imageUrl);
 
@@ -399,22 +386,6 @@ function initializeForm() {
 
     const formData = new FormData(uploadForm);
 
-    const file = fileInput.files[0];
-    if (file) {
-      formData.append('filename', file);
-    }
-
-    formData.append('scale', scaleValue.value);
-
-    formData.append('hashtags', hashtagsInput.value.trim());
-    formData.append('description', descriptionInput.value.trim());
-
-    const effectSettings = getEffectSettings();
-    formData.append('effect', effectSettings.effect);
-    if (effectSettings.intensity !== null) {
-      formData.append('effect-level', effectSettings.intensity.toString());
-    }
-
     try {
       await uploadImageData(formData);
 
@@ -423,7 +394,6 @@ function initializeForm() {
 
     } catch (error) {
       showNotification('error');
-
       submitBtn.disabled = false;
       submitBtn.textContent = 'Опубликовать';
     }
