@@ -2,54 +2,65 @@ import { fetchImagesFromServer } from './api.js';
 import { renderThumbnails } from './thumbnails.js';
 import { initializeForm } from './form.js';
 
-const userPhotos = [];
 const FILTER_TIMEOUT = 500;
 const RANDOM_COUNT = 10;
 const filtersSection = document.querySelector('.img-filters');
 let allServerPhotos = [];
 let filteredPhotos = [];
 
-function createDebouncedFunction(callback, delay) {
+const debounce = (callback, timeoutDelay = 500) => {
   let timeoutId;
-  return function(...args) {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => callback.apply(this, args), delay);
-  };
-}
 
-function getRandomPhotos(photos) {
+  return (...rest) => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+
+    timeoutId = setTimeout(() => {
+      try {
+        callback.apply(this, rest);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Ошибка в debounce:', error);
+      }
+    }, timeoutDelay);
+  };
+};
+
+const getRandomPhotos = (photos) => {
   const shuffled = [...photos].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, RANDOM_COUNT);
-}
+};
 
-function getMostCommentedPhotos(photos) {
-  return [...photos].sort((a, b) => b.comments.length - a.comments.length);
-}
+const getMostCommentedPhotos = (photos) => [...photos].sort((a, b) => b.comments.length - a.comments.length);
 
-function clearPhotoGrid() {
+const clearPhotoGrid = () => {
   const container = document.querySelector('.pictures');
   const pictures = container.querySelectorAll('.picture');
   pictures.forEach((photo) => photo.remove());
-}
+};
 
-function applyPhotoFilter(filterId) {
+const applyPhotoFilter = (filterId) => {
   clearPhotoGrid();
 
-  if (filterId === 'filter-default') {
-    filteredPhotos = allServerPhotos;
-  } else if (filterId === 'filter-random') {
-    filteredPhotos = getRandomPhotos(allServerPhotos);
-  } else if (filterId === 'filter-discussed') {
-    filteredPhotos = getMostCommentedPhotos(allServerPhotos);
+  switch (filterId) {
+    case 'filter-random':
+      filteredPhotos = getRandomPhotos(allServerPhotos);
+      break;
+    case 'filter-discussed':
+      filteredPhotos = getMostCommentedPhotos(allServerPhotos);
+      break;
+    default:
+      filteredPhotos = [...allServerPhotos];
   }
 
   renderThumbnails(filteredPhotos);
-}
+};
 
-const debouncedFilter = createDebouncedFunction(applyPhotoFilter, FILTER_TIMEOUT);
+const debouncedFilter = debounce(applyPhotoFilter, FILTER_TIMEOUT);
 
-function setupFilterButtons() {
-  filtersSection.classList.remove('img-filters--inactive');
+const setupFilterButtons = () => {
+  const buttons = filtersSection.querySelectorAll('.img-filters__button');
 
   const defaultButton = document.querySelector('#filter-default');
   if (defaultButton) {
@@ -57,22 +68,24 @@ function setupFilterButtons() {
   }
 
   filtersSection.addEventListener('click', (event) => {
-    if (event.target.classList.contains('img-filters__button')) {
-      const activeButton = filtersSection.querySelector('.img-filters__button--active');
-      if (activeButton) {
-        activeButton.classList.remove('img-filters__button--active');
-      }
-
-      event.target.classList.add('img-filters__button--active');
-      debouncedFilter(event.target.id);
+    if (!event.target.classList.contains('img-filters__button')) {
+      return;
     }
-  });
-}
 
-async function loadServerPhotos() {
+    buttons.forEach((button) => {
+      button.classList.remove('img-filters__button--active');
+    });
+
+    event.target.classList.add('img-filters__button--active');
+
+    debouncedFilter(event.target.id);
+  });
+};
+
+const loadServerPhotos = async () => {
   try {
     allServerPhotos = await fetchImagesFromServer();
-    filteredPhotos = allServerPhotos;
+    filteredPhotos = [...allServerPhotos];
 
     renderThumbnails(filteredPhotos);
 
@@ -92,17 +105,16 @@ async function loadServerPhotos() {
       margin: 20px auto;
       border-radius: 5px;
       max-width: 600px;
+      z-index: 1000;
     `;
     document.body.appendChild(errorMessage);
   }
-}
+};
 
-function startApplication() {
-  initializeForm(userPhotos, renderThumbnails);
-
-  setTimeout(() => {
-    loadServerPhotos();
-  }, 100);
-}
+const startApplication = () => {
+  initializeForm();
+  loadServerPhotos();
+};
 
 document.addEventListener('DOMContentLoaded', startApplication);
+

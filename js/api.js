@@ -1,24 +1,26 @@
-const SERVER_URL = 'https://29.javascript.htmlacademy.pro/kekstagram';
+const SERVER_URL = 'https://32.javascript.htmlacademy.pro/kekstagram';
 
-async function fetchImagesFromServer() {
+export const fetchImagesFromServer = async () => {
   const response = await fetch(`${SERVER_URL}/data`);
-  if (!response.ok) {
-    throw new Error(`Ошибка сервера: ${response.status}`);
-  }
-  return response.json();
-}
 
-async function uploadImageData(formData) {
+  if (!response.ok) {
+    throw new Error('Не удалось загрузить изображения');
+  }
+
+  return response.json();
+};
+
+export const uploadImageData = async (formData) => {
   const response = await fetch(SERVER_URL, {
     method: 'POST',
     body: formData,
   });
 
+  const data = await response.json();
+
   if (!response.ok) {
-    throw new Error(`Ошибка загрузки: ${response.status}`);
+    throw new Error('Ошибка отправки данных');
   }
 
-  return response.json();
-}
-
-export { fetchImagesFromServer, uploadImageData };
+  return data;
+};
